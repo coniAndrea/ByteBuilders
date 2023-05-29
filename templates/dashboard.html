@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="/static/dashboard.css">
+<html>
+<head>
+    <title>Sistema Bancario - Panel de Control</title>
+</head>
+<body>
+    <h1>Bienvenido al panel de control, {{ user['first_name'] }} {{ user['last_name'] }}</h1>
+    <h3>Saldos:</h3>
+    <p>Tu saldo actual es: ${{ user['balance'] }}</p>
+
+    <h3>Tarjeta electrónica:</h3>
+    <p>Información de la tarjeta:</p>
+    <ul>
+        <li>Correo electrónico: {{ user['email'] }}</li>
+        <li>Nombre: {{ user['first_name'] }}</li>
+        <li>Apellido: {{ user['last_name'] }}</li>
+        <li>Nombre de usuario: {{ session['username'] }}</li>
+    </ul>
+
+    <a href="/logout">Cerrar sesión</a>
+</body>
+</html>
