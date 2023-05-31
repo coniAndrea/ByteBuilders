@@ -96,7 +96,7 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
-@app.route('/transfer', methods=['GET','POST'])
+@app.route('/transfer', methods=['POST'])
 def transfer():
     username = session.get('username')
     if not username:
@@ -121,9 +121,9 @@ def transfer():
     sender['balance'] -= amount
     receiver['balance'] += amount
 
-    return redirect('/dashboard')
+    return render_template('transfer.html')
 
-@app.route('/reload', methods=['POST'])
+@app.route('/reload_balance', methods=['POST'])
 def reload_balance():
     username = session.get('username')
     if not username:
@@ -140,7 +140,7 @@ def reload_balance():
 
     user['balance'] += amount
 
-    return redirect('/dashboard')
+    return render_template('/reload.html')
 
 #@app.route('/pay', methods=['POST'])
 #def make_payment():
