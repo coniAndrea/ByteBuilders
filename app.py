@@ -1,8 +1,17 @@
 from flask import Flask, render_template, request, session, redirect
 import random
+from flaskext.mysql import MySQL
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
+
+# CONEXIÓN MYSQL
+mysql = MySQL()
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = ''
+app.config['MYSQL_DATABASE_DB'] = 'bytebuilders'
+mysql.init_app(app)
 
 # Base de datos simulada de usuarios
 users = {
@@ -28,6 +37,8 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    conexion= mysql.connect()
+    print(conexion)
     if request.method == 'POST':
         email = request.form['email']
         first_name = request.form['first_name']
@@ -42,7 +53,15 @@ def register():
             return render_template('register.html', error=error)
 
         # Validar que el usuario no exista
-        if username in users:
+        conexion = mysql.connect()
+        cursor = conexion.cursor()
+
+        sql = "SELECT * FROM users WHERE username = %s "
+        datos = (username)
+        cursor.execute(sql, datos)
+        user = cursor.fetchone()
+
+        if username=="username":
             error = 'El nombre de usuario ya está en uso.'
             return render_template('register.html', error=error)
 
@@ -51,16 +70,15 @@ def register():
             error = 'Las contraseñas no coinciden.'
             return render_template('register.html', error=error)
 
-        # Registrar el usuario
-        users[username] = {
-            'email': email,
-            'first_name': first_name,
-            'last_name': last_name,
-            'password': password,
-            'balance': 0
-        }
+        # Registro BD
+        sql="INSERT INTO `users` (`user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance`) VALUES (NULL, %s, %s, %s, %s, %s, 0);"
+        datos=(email, first_name, last_name, username, password)
+        
+        cursor=conexion.cursor()
+        cursor.execute(sql, datos)
+        conexion.commit()
 
-        session['username'] = username
+        session['username'] = user['username']
         return redirect('/dashboard')
 
     return render_template('register.html')
@@ -71,9 +89,18 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # Validar las credenciales de inicio de sesión
-        if username in users and users[username]['password'] == password:
-            session['username'] = username
+        # Verificar las credenciales de inicio de sesión en la base de datos
+        conexion = mysql.connect()
+        cursor = conexion.cursor()
+        print(conexion)
+
+        sql = "SELECT * FROM users WHERE username = %s AND password = %s"
+        datos = (username, password)
+        cursor.execute(sql, datos)
+        user = cursor.fetchone()
+
+        if username in users == username:           
+            session['username'] = user
             return redirect('/dashboard')
         else:
             error = 'Credenciales inválidas. Por favor, intenta de nuevo.'
