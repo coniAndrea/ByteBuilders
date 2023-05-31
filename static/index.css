@@ -1,15 +1,42 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
 .container {
+    height: 100%;
+    background-image: url("/static/index.png");
+    background-size: cover;
     display: flex;
+    align-items: center;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    flex-direction: column;
+    text-align: center;
 }
 
-.content {
-    display: flex;
-    align-items: center;
+.image img {
+    max-width: 100%;
+    max-height: 99%;
 }
 
-.image {
-    margin-right: 20px;
+.content h1 {
+    color: #b1d8fe;
+    font-size: 36px;
+    margin-top: 20px;
+}
+
+a {
+    color: #bdadf3;
+    text-decoration: none;
+    margin-top: 10px;
+    display: inline-block;
+    padding: 5px 10px;
+    border: 1px solid #bdadf3;
+    border-radius: 4px;
+}
+
+a:hover {
+    background-color: #b1d8fe;
+    color: #ef03cb;
 }
