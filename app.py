@@ -15,10 +15,10 @@ mysql.init_app(app)
 # Base de datos simulada de usuarios
 users = {
     'user1': {
-        'email': '',
-        'first_name': '',
-        'last_name': '',
-        'password': '',
+        'email': 'user1',
+        'first_name': 'Juan',
+        'last_name': 'Perez',
+        'password': '123456',
         'balance': 1000
     }
 }
