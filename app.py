@@ -235,7 +235,7 @@ def reload_balance():
     #card_number = ''.join(random.choice('0123456789') for _ in range(16))
     #return card_number
 
-
+    
 #Mostrar los datos de la BD como api
 @app.route('/usuario', methods=['GET'])
 def listar_usuarios_registrados():
