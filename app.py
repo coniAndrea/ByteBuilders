@@ -96,7 +96,7 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
-@app.route('/transfer', methods=['POST'])
+@app.route('/transfer', methods=['GET','POST'])
 def transfer():
     username = session.get('username')
     if not username:
@@ -164,7 +164,7 @@ def reload_balance():
 #def generate_card_number():
     # Generar un número de tarjeta de 16 dígitos
     #card_number = ''.join(random.choice('0123456789') for _ in range(16))
-   # return card_number
+    #return card_number
 
 if __name__ == '__main__':
     app.run(debug=True)
