@@ -15,7 +15,7 @@
     <title>Recarga</title>
 </head>
 <body>
-    <form action="/transfer" method="POST">
+    <form action="{{ url_for('reload_balance') }}" method="POST">
         <div class="container">
             <div class="row">
               <div class="col-md-4">
@@ -24,16 +24,14 @@
                 <br>
                 <div class="card">
                   <div class="card-header">
-                    <a class="back-button" href="{{ url_for('/dashboard')}}">
+                    <a class="back-button" href="{{ url_for('dashboard')}}">
                         <i class="fas fa-arrow-left" style="color: #993cd7;"></i>
                       </a>
                     <h3>Recarga de saldo</h3>
                   </div>
                   <div class="card-body">
-                    <form action="/templates/transferencia/guardar" method="post">
+                    <form action="" method="post">
                       <div class="mb-3">
-                        <label for="destinatario" class="form-label">Destinatario</label><br>
-                        <input type="text" id="receiver" name="receiver" required>
                       <div class="mb-3">
                         <label for="monto" class="form-label">Monto de recarga</label>
                         <div class="input-group">
