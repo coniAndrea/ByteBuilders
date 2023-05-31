@@ -1,14 +1,14 @@
 /* Estilos para el formulario de inicio de sesión */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f2f2f2;
+    background-color: #b1d8fe;
     margin: 0;
     padding: 0;
 }
 
 h1 {
     text-align: center;
-    color: #333;
+    color: #000000;
 }
 
 form {
@@ -31,7 +31,7 @@ form input[type="text"],
 form input[type="password"] {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid #ef03cb;
     border-radius: 4px;
     box-sizing: border-box;
     margin-bottom: 10px;
@@ -40,15 +40,15 @@ form input[type="password"] {
 form input[type="submit"] {
     width: 100%;
     padding: 10px;
-    background-color: #4CAF50;
+    background-color: #9e93ba;
     border: none;
-    color: #fff;
+    color: #ffffff;
     cursor: pointer;
     border-radius: 4px;
 }
 
 form input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: #bdadf3;
 }
 
 p.error {
