@@ -123,7 +123,7 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
-@app.route('/transfer', methods=['POST'])
+@app.route('/transfer', methods=['GET','POST'])
 def transfer():
     username = session.get('username')
     if not username:
@@ -169,29 +169,29 @@ def reload_balance():
 
     return redirect('/dashboard')
 
-@app.route('/pay', methods=['POST'])
-def make_payment():
-    username = session.get('username')
-    if not username:
-        return redirect('/login')
+#@app.route('/pay', methods=['POST'])
+#def make_payment():
+ #   username = session.get('username')
+ #   if not username:
+  #      return redirect('/login')
 
-    user = users.get(username)
-    if not user:
-        return redirect('/login')
+   # user = users.get(username)
+   # if not user:
+        #return redirect('/login')
 
-    amount = int(request.form['amount'])
-    if amount <= 0 or amount > user['balance']:
-        error = 'Monto inválido.'
-        return render_template('dashboard.html', user=user, error=error)
+    #amount = int(request.form['amount'])
+    #if amount <= 0 or amount > user['balance']:
+       # error = 'Monto inválido.'
+        #return render_template('dashboard.html', user=user, error=error)
 
-    user['balance'] -= amount
+   # user['balance'] -= amount
 
-    return redirect('/dashboard')
+   # return redirect('/dashboard')
 
-def generate_card_number():
+#def generate_card_number():
     # Generar un número de tarjeta de 16 dígitos
-    card_number = ''.join(random.choice('0123456789') for _ in range(16))
-    return card_number
+    #card_number = ''.join(random.choice('0123456789') for _ in range(16))
+    #return card_number
 
 if __name__ == '__main__':
     app.run(debug=True)

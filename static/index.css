@@ -1,30 +1,42 @@
-/* Estilo para el cuerpo de la página */
+html,
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f2f2f2;
+    height: 100%;
     margin: 0;
-    padding: 20px;
 }
 
-/* Estilo para el encabezado h1 */
-h1 {
-    color: #333;
+.container {
+    height: 100%;
+    background-image: url("/static/index.png");
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
     text-align: center;
 }
 
-/* Estilo para los enlaces */
+.image img {
+    max-width: 100%;
+    max-height: 99%;
+}
+
+.content h1 {
+    color: #b1d8fe;
+    font-size: 36px;
+    margin-top: 20px;
+}
+
 a {
-    color: #007bff;
+    color: #bdadf3;
     text-decoration: none;
+    margin-top: 10px;
+    display: inline-block;
+    padding: 5px 10px;
+    border: 1px solid #bdadf3;
+    border-radius: 4px;
 }
 
 a:hover {
-    text-decoration: underline;
-}
-
-/* Estilo para los párrafos */
-p {
-    color: #555;
-    text-align: center;
-    margin: 10px 0;
+    background-color: #b1d8fe;
+    color: #ef03cb;
 }
