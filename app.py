@@ -81,18 +81,19 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # Verificar las credenciales de inicio de sesión en la base de datos
-        conexion = mysql.connect()
-        cursor = conexion.cursor()
-        print(conexion)
+        # Conectar a la base de datos
+        conn = mysql.connect()
+        cursor = conn.cursor()
 
+        # Validar las credenciales de inicio de sesión consultando la base de datos
         sql = "SELECT * FROM users WHERE username = %s AND password = %s"
-        datos = (username, password)
-        cursor.execute(sql, datos)
+        data = (username, password)
+        cursor.execute(sql, data)
         user = cursor.fetchone()
 
-        if username in users == username:           
-            session['username'] = user
+        if user:
+            # Si el usuario existe en la base de datos, establecer la sesión
+            session['username'] = username  # username se encuentra en la posición 4 del resultado de la consulta
             return redirect('/dashboard')
         else:
             error = 'Credenciales inválidas. Por favor, intenta de nuevo.'
@@ -104,10 +105,26 @@ def login():
 def dashboard():
     if 'username' in session:
         username = session['username']
-        user = users.get(username)
-        if user:
+
+        # Conectar a la base de datos
+        conn = mysql.connect()
+        cursor = conn.cursor()
+
+        # Consultar los datos del usuario desde la base de datos
+        sql = "SELECT * FROM users WHERE username = %s"
+        cursor.execute(sql, (username,))
+        user_data = cursor.fetchone()
+
+        if user_data:
+            user = {
+                'username': user_data[4],
+                'email': user_data[1],
+                'first_name': user_data[2],
+                'last_name': user_data[3],
+                'balance': user_data[6]
+            }
             return render_template('dashboard.html', user=user)
-    
+
     return redirect('/login')
 
 @app.route('/logout')
@@ -125,22 +142,24 @@ def transfer():
     if not sender:
         return redirect('/login')
 
-    receiver_username = request.form['receiver']
-    amount = int(request.form['amount'])
+    if request.method == 'POST':
+        receiver_username = request.form['receiver']
+        amount = int(request.form['amount'])
 
-    receiver = users.get(receiver_username)
-    if not receiver:
-        error = 'El destinatario no existe.'
-        return render_template('dashboard.html', user=sender, error=error)
+        receiver = users.get(receiver_username)
+        if not receiver:
+            error = 'El destinatario no existe.'
+            return render_template('transfer.html', user=sender, error=error)
 
-    if amount <= 0 or amount > sender['balance']:
-        error = 'Monto inválido.'
-        return render_template('dashboard.html', user=sender, error=error)
+        if amount <= 0 or amount > sender['balance']:
+            error = 'Monto inválido.'
+            return render_template('transfer.html', user=sender, error=error)
 
-    sender['balance'] -= amount
-    receiver['balance'] += amount
+        sender['balance'] -= amount
+        receiver['balance'] += amount
 
-    return redirect('/dashboard')
+        return redirect('/dashboard')
+    return render_template('transfer.html', user=sender)
 
 @app.route('/reload', methods=['POST'])
 def reload_balance():
