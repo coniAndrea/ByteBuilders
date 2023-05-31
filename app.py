@@ -12,17 +12,6 @@ app.config['MYSQL_DATABASE_PASSWORD'] = ''
 app.config['MYSQL_DATABASE_DB'] = 'bytebuilders'
 mysql.init_app(app)
 
-# Base de datos simulada de usuarios
-users = {
-    'user1': {
-        'email': '',
-        'first_name': '',
-        'last_name': '',
-        'password': '',
-        'balance': 1000
-    }
-}
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -81,18 +70,22 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # Verificar las credenciales de inicio de sesión en la base de datos
-        conexion = mysql.connect()
-        cursor = conexion.cursor()
-        print(conexion)
+        conn = mysql.connect()
+        cursor = conn.cursor()
 
         sql = "SELECT * FROM users WHERE username = %s AND password = %s"
-        datos = (username, password)
-        cursor.execute(sql, datos)
+        data = (username, password)
+        cursor.execute(sql, data)
         user = cursor.fetchone()
 
-        if username in users == username:           
-            session['username'] = user
+        if user:
+            session['user'] = {
+                'username': user[4],
+                'email': user[1],
+                'first_name': user[2],
+                'last_name': user[3],
+                'balance': user[6]
+            }
             return redirect('/dashboard')
         else:
             error = 'Credenciales inválidas. Por favor, intenta de nuevo.'
@@ -102,11 +95,9 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'username' in session:
-        username = session['username']
-        user = users.get(username)
-        if user:
-            return render_template('dashboard.html', user=user)
+    if 'user' in session:
+        user = session['user']
+        return render_template('dashboard.html', user=user)
     
     return redirect('/login')
 
@@ -115,51 +106,110 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
-@app.route('/transfer', methods=['POST'])
+@app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
-    username = session.get('username')
-    if not username:
+    if 'user' in session:
+        sender = session['user']
+        return render_template('transfer.html', user=sender)
+
+    sender_username = session.get('username')
+    if not sender_username:
         return redirect('/login')
 
-    sender = users.get(username)
-    if not sender:
+    conn = mysql.connect()
+    cursor = conn.cursor()
+
+    sql = "SELECT * FROM users WHERE username = %s"
+    cursor.execute(sql, (sender_username,))
+    sender_data = cursor.fetchone()
+
+    if not sender_data:
         return redirect('/login')
 
-    receiver_username = request.form['receiver']
-    amount = int(request.form['amount'])
+    sender = {
+        'username': sender_data[4],
+        'email': sender_data[1],
+        'first_name': sender_data[2],
+        'last_name': sender_data[3],
+        'balance': sender_data[6]
+    }
 
-    receiver = users.get(receiver_username)
-    if not receiver:
-        error = 'El destinatario no existe.'
-        return render_template('dashboard.html', user=sender, error=error)
+    if request.method == 'POST':
+        receiver_username = request.form['receiver']
+        amount = int(request.form['amount'])
 
-    if amount <= 0 or amount > sender['balance']:
-        error = 'Monto inválido.'
-        return render_template('dashboard.html', user=sender, error=error)
+        sql = "SELECT * FROM users WHERE username = %s"
+        cursor.execute(sql, (receiver_username,))
+        receiver_data = cursor.fetchone()
 
-    sender['balance'] -= amount
-    receiver['balance'] += amount
+        if not receiver_data:
+            error = 'El destinatario no existe.'
+            return render_template('transfer.html', user=sender, error=error)
 
-    return render_template('transfer.html')
+        receiver = {
+            'username': receiver_data[4],
+            'email': receiver_data[1],
+            'first_name': receiver_data[2],
+            'last_name': receiver_data[3],
+            'balance': receiver_data[6]
+        }
 
-@app.route('/reload_balance', methods=['POST'])
+        if amount <= 0 or amount > sender['balance']:
+            error = 'Monto inválido.'
+            return render_template('transfer.html', user=sender, error=error)
+
+        sender['balance'] -= amount
+        receiver['balance'] += amount
+
+        sql = "UPDATE users SET balance = %s WHERE username = %s"
+        cursor.execute(sql, (sender['balance'], sender['username']))
+        cursor.execute(sql, (receiver['balance'], receiver['username']))
+        conn.commit()
+
+        return redirect('/dashboard')
+
+    return render_template('transfer.html', user=sender)
+
+@app.route('/reload', methods=['GET', 'POST'])
 def reload_balance():
+    if 'user' in session:
+        user = session['user']
+        return render_template('reload.html', user=user)
+
     username = session.get('username')
     if not username:
         return redirect('/login')
 
-    user = users.get(username)
-    if not user:
+    conn = mysql.connect()
+    cursor = conn.cursor()
+
+    sql = "SELECT * FROM users WHERE username = %s"
+    cursor.execute(sql, (username,))
+    user_data = cursor.fetchone()
+
+    if not user_data:
         return redirect('/login')
 
-    amount = int(request.form['amount'])
-    if amount <= 0:
-        error = 'Monto inválido.'
-        return render_template('dashboard.html', user=user, error=error)
+    user = {
+        'username': user_data[4],
+        'email': user_data[1],
+        'first_name': user_data[2],
+        'last_name': user_data[3],
+        'balance': user_data[6]
+    }
 
-    user['balance'] += amount
+    if request.method == 'POST':
+        amount = int(request.form['amount'])
+        if amount <= 0:
+            error = 'Monto inválido.'
+            return render_template('reload.html', user=user, error=error)
 
-    return render_template('/reload.html')
+        new_balance = user['balance'] + amount
+        sql = "UPDATE users SET balance = %s WHERE username = %s"
+        cursor.execute(sql, (new_balance, user['username']))
+        conn.commit()
+
+        return redirect('/dashboard')
 
 #@app.route('/pay', methods=['POST'])
 #def make_payment():
@@ -185,7 +235,7 @@ def reload_balance():
     #card_number = ''.join(random.choice('0123456789') for _ in range(16))
     #return card_number
 
-
+    
 #Mostrar los datos de la BD como api
 @app.route('/usuario', methods=['GET'])
 def listar_usuarios_registrados():
