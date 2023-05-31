@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, session, redirect
-import random
+from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 
 app = Flask(__name__)
@@ -16,18 +15,11 @@ mysql.init_app(app)
 # Base de datos simulada de usuarios
 users = {
     'user1': {
-        'email': 'user1@example.com',
-        'first_name': 'John',
-        'last_name': 'Doe',
-        'password': 'password1',
+        'email': '',
+        'first_name': '',
+        'last_name': '',
+        'password': '',
         'balance': 1000
-    },
-    'user2': {
-        'email': 'user2@example.com',
-        'first_name': 'Jane',
-        'last_name': 'Smith',
-        'password': 'password2',
-        'balance': 500
     }
 }
 
@@ -78,7 +70,7 @@ def register():
         cursor.execute(sql, datos)
         conexion.commit()
 
-        session['username'] = user['username']
+        session['username'] = user
         return redirect('/dashboard')
 
     return render_template('register.html')
@@ -193,5 +185,76 @@ def reload_balance():
     #card_number = ''.join(random.choice('0123456789') for _ in range(16))
     #return card_number
 
+
+#Mostrar los datos de la BD como api
+@app.route('/usuario', methods=['GET'])
+def listar_usuarios_registrados():
+    try:
+        conexion= mysql.connect()
+        cursor=conexion.cursor()
+        sql="SELECT `user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance` FROM `users`"
+        cursor.execute(sql)
+        datos=cursor.fetchall()#fetchall convierte la respuesta en algo entendible para python
+        usuarios=[]
+        for fila in datos:
+            usuario={'user_id':fila[0], 'email':fila[1], 'first_name':fila[2], 'last_name':fila[3], 'username':fila[4], 'password':fila[5], 'balance':fila[6]}
+            usuarios.append(usuario)
+        return jsonify({'Usuarios':usuarios, 'message':"Listado de Usuarios Registrados."})
+    except Exception as ex:
+        return jsonify({'message':"Error al Cargar"})
+    
+@app.route('/usuario/<codigo>', methods=['GET'])
+def leer_usuario(codigo):
+    try:
+        conexion= mysql.connect()
+        cursor=conexion.cursor()
+        sql="SELECT `user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance` FROM `users` WHERE user_id = '{0}'".format(codigo)
+        cursor.execute(sql)
+        datos=cursor.fetchone()
+        if datos != None:
+            usuario={'user_id':datos[0], 'email':datos[1], 'first_name':datos[2], 'last_name':datos[3], 'username':datos[4], 'password':datos[5], 'balance':datos[6]}
+            return jsonify({'usuarios':usuario,'message':"Usuario Encontrado."})
+        else:
+            return jsonify({'message':"Usuario no encontrado."})
+    except Exception as ex:
+        return jsonify({'message':"Error"})
+    
+@app.route('/usuario', methods=['POST'])
+def registrar_usuario():
+    try:
+        conexion= mysql.connect()
+        cursor=conexion.cursor()
+        sql="INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}');".format(request.json['email'],request.json['first_name'],request.json['last_name'],request.json['username'],request.json['password'],request.json['balance'])
+        cursor.execute(sql)
+        conexion.commit()
+        return jsonify({'message':"Usuario Registrado"})
+    except Exception as ex:
+        return jsonify({'message':"Error"})
+    
+@app.route('/usuario/<codigo>', methods=['DELETE'])
+def eliminar_usuario(codigo):
+    try:
+        conexion= mysql.connect()
+        cursor=conexion.cursor()
+        sql="DELETE FROM users WHERE user_id ='{0}'".format(codigo)
+        cursor.execute(sql)
+        conexion.commit()
+        return jsonify({'message':"Usuario Eliminado"})
+    except Exception as ex:
+        return jsonify({'message':"Error"})      
+    
+@app.route('/usuario/<codigo>', methods=['PUT'])
+def actualizar_usuario(codigo):
+    try:
+        conexion= mysql.connect()
+        cursor=conexion.cursor()
+        sql="UPDATE users SET email='{0}', first_name='{1}', last_name='{2}', username='{3}', password='{4}', balance='{5}' WHERE user_id = '{6}'".format(request.json['email'],request.json['first_name'],request.json['last_name'],request.json['username'],request.json['password'],request.json['balance'], codigo)
+        cursor.execute(sql)
+        conexion.commit()
+        return jsonify({'message':"Usuario Actualizado"})
+    except Exception as ex:
+        return jsonify({'message':"Error"})    
+    
+#Termino de código api rest
 if __name__ == '__main__':
     app.run(debug=True)
