@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
+import requests
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -238,6 +239,29 @@ def reload_balance():
 
     
 #Mostrar los datos de la BD como api
+@app.route('/api/v1/api_saludo', methods=['GET'])
+def api_saludo():
+    # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")
+    response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saldo")
+    # print(response)
+    resp = response.json()
+    return str(resp["saldo"])
+    # return resp['message'] 
+
+@app.route('/api/v1/correo', methods=['GET'])
+def api_correo():
+    response = requests.post("https://musicpro.bemtorres.win/api/v1/musicpro/send_email", 
+                                data = {
+                                    'correo':'di.toro@duocuc.cl',
+                                    'asunto':'reprobado',
+                                    'contenido':'ha reprobado :( nos vemos en TAV'
+                                }
+                            )
+    # print(response)
+    resp = response.json()
+    return resp
+    # return resp['message'] 
+
 @app.route('/api/v1/usuario', methods=['GET'])
 def listar_usuarios_registrados():
     try:
