@@ -18,8 +18,7 @@
     <form action="{{ url_for('transfer') }}" method="POST">
         <div class="container">
             <div class="row">
-                <div class="col-md-4">
-                </div>
+                <div class="col-md-4"></div>
                 <div class="col-md-4">
                     <br>
                     <div class="card">
@@ -31,11 +30,12 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="destinatario" class="form-label">Destinatario</label><br>
-                                <input type="text" id="receiver" name="receiver" required>
+    
+                                <label for="receiver" class="form-label">Destinatario</label><br>
+                                 <input type="text" class="form-control" id="receiver" name="receiver" required>
                             </div>
                             <div class="mb-3">
-                                <label for="monto" class="form-label">Monto a transferir</label>
+                                <label for="amount" class="form-label">Monto a transferir</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
                                     <input type="text" id="amount" name="amount" required>
@@ -49,10 +49,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                </div>
+                <div class="col-md-4"></div>
             </div>
         </div>
     </form>
+    
 </body>
 </html>
