@@ -238,7 +238,7 @@ def reload_balance():
 
     
 #Mostrar los datos de la BD como api
-@app.route('/usuario', methods=['GET'])
+@app.route('/api/v1/usuario', methods=['GET'])
 def listar_usuarios_registrados():
     try:
         conexion= mysql.connect()
@@ -254,7 +254,7 @@ def listar_usuarios_registrados():
     except Exception as ex:
         return jsonify({'message':"Error al Cargar"})
     
-@app.route('/usuario/<codigo>', methods=['GET'])
+@app.route('/api/v1/usuario/<codigo>', methods=['GET'])
 def leer_usuario(codigo):
     try:
         conexion= mysql.connect()
