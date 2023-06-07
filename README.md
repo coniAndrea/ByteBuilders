@@ -5,3 +5,12 @@ Instrucciones:
 [ByteBuilders.txt](https://github.com/coniAndrea/ByteBuilders/files/11609952/ByteBuilders.txt)
 3. En el terminal de visual studio debes instalar flask y flask-mysql. por ejemplo: pip install flask, flask-mysql .
 4. Despúes de la instalación puedes arrancar el proyecto con el siguiente comando en Terminal: py app.py
+
+
+
+## Nuevas instrucciones
+
+para agregar nuevos requerimientos -> pip freeze > requirements.txt
+
+ahora es pip install -r requirements.txt
+
