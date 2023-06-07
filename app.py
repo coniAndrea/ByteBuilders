@@ -97,7 +97,8 @@ def login():
 def dashboard():
     if 'user' in session:
         user = session['user']
-        return render_template('dashboard.html', user=user)
+        if user:
+            return render_template('dashboard.html', user=user)
     
     return redirect('/login')
 
