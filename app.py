@@ -1,6 +1,8 @@
+import os
+import click
+import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
-import requests
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -55,7 +57,7 @@ def register():
         # Registro BD
         sql="INSERT INTO `users` (`user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance`) VALUES (NULL, %s, %s, %s, %s, %s, 0);"
         datos=(email, first_name, last_name, username, password)
-        
+
         cursor=conexion.cursor()
         cursor.execute(sql, datos)
         conexion.commit()
@@ -100,7 +102,7 @@ def dashboard():
         user = session['user']
         if user:
             return render_template('dashboard.html', user=user)
-    
+
     return redirect('/login')
 
 @app.route('/logout')
@@ -237,7 +239,7 @@ def reload_balance():
     #card_number = ''.join(random.choice('0123456789') for _ in range(16))
     #return card_number
 
-    
+
 #Mostrar los datos de la BD como api
 @app.route('/api/v1/api_saludo', methods=['GET'])
 def api_saludo():
@@ -246,11 +248,11 @@ def api_saludo():
     # print(response)
     resp = response.json()
     return str(resp["saldo"])
-    # return resp['message'] 
+    # return resp['message']
 
 @app.route('/api/v1/correo', methods=['GET'])
 def api_correo():
-    response = requests.post("https://musicpro.bemtorres.win/api/v1/musicpro/send_email", 
+    response = requests.post("https://musicpro.bemtorres.win/api/v1/musicpro/send_email",
                                 data = {
                                     'correo':'di.toro@duocuc.cl',
                                     'asunto':'reprobado',
@@ -260,7 +262,7 @@ def api_correo():
     # print(response)
     resp = response.json()
     return resp
-    # return resp['message'] 
+    # return resp['message']
 
 @app.route('/api/v1/usuario', methods=['GET'])
 def listar_usuarios_registrados():
@@ -277,7 +279,7 @@ def listar_usuarios_registrados():
         return jsonify({'Usuarios':usuarios, 'message':"Listado de Usuarios Registrados."})
     except Exception as ex:
         return jsonify({'message':"Error al Cargar"})
-    
+
 @app.route('/api/v1/usuario/<codigo>', methods=['GET'])
 def leer_usuario(codigo):
     try:
@@ -293,7 +295,7 @@ def leer_usuario(codigo):
             return jsonify({'message':"Usuario no encontrado."})
     except Exception as ex:
         return jsonify({'message':"Error"})
-    
+
 @app.route('/usuario', methods=['POST'])
 def registrar_usuario():
     try:
@@ -305,7 +307,7 @@ def registrar_usuario():
         return jsonify({'message':"Usuario Registrado"})
     except Exception as ex:
         return jsonify({'message':"Error"})
-    
+
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
     try:
@@ -316,8 +318,8 @@ def eliminar_usuario(codigo):
         conexion.commit()
         return jsonify({'message':"Usuario Eliminado"})
     except Exception as ex:
-        return jsonify({'message':"Error"})      
-    
+        return jsonify({'message':"Error"})
+
 @app.route('/usuario/<codigo>', methods=['PUT'])
 def actualizar_usuario(codigo):
     try:
@@ -328,8 +330,38 @@ def actualizar_usuario(codigo):
         conexion.commit()
         return jsonify({'message':"Usuario Actualizado"})
     except Exception as ex:
-        return jsonify({'message':"Error"})    
-    
+        return jsonify({'message':"Error"})
+
+
+@app.cli.command("import_db")
+@click.argument('file_path', default=os.path.join('bd', 'database.sql'))
+def import_db(file_path):
+  try:
+    conexion= mysql.connect()
+    cursor = conexion.cursor()
+
+    # Leer el contenido del archivo SQL
+    with open(file_path, 'r',  encoding='utf-8') as f:
+      sql_script = f.read()
+
+    # Separar las declaraciones SQL individuales
+    statements = sql_script.split(';')
+
+    # Ejecutar cada declaración SQL
+    for statement in statements:
+      if statement.strip():
+        cursor.execute(statement)
+
+    conexion.commit()
+    conexion.close()
+
+    click.echo('Base de datos importada con éxito!')
+  except Exception as ex:
+    click.echo('Error al importar la base de datos')
+    click.echo(ex)
+
 #Termino de código api rest
 if __name__ == '__main__':
     app.run(debug=True)
+
+
