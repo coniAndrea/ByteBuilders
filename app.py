@@ -8,6 +8,8 @@ import random
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
+#app.run(host = '192.168.147.166', port = 5000)
+app.run(debug=True)
 fake = Faker('en_US')
 # CONEXIÓN MYSQL
 mysql = MySQL()
@@ -311,6 +313,19 @@ def registrar_usuario():
     except Exception as ex:
         return jsonify({'message':"Error"})
 
+# @app.route('/api/v1/transferencia', methods=['POST'])
+# def api_transferencia():
+#     try:
+#         cuenta_origen = request.json.get('cuenta_origen')
+#         cuenta_destino = request.json.get('cuenta_destino')
+#         monto = request.json.get('monto')
+#         print(cuenta_origen)
+#         print(cuenta_destino)
+#         print(monto)
+#         return jsonify({'message': 'Transferencia exitosa'})
+#     except Exception as ex:
+#         return jsonify({'message':"Error"})        
+
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
     try:
@@ -363,34 +378,33 @@ def import_db(file_path):
     click.echo('Error al importar la base de datos')
     click.echo(ex)
 
-@app.cli.command("import_faker")
-def import_faker():
-  try:
+# @app.cli.command("import_faker")
+# def import_faker():
+#   try:
    
-    conexion= mysql.connect()
-    cursor = conexion.cursor()
-    for _ in range(40):
-        email = fake.email()
-        first_name = fake.first_name()
-        last_name = fake.last_name()
-        username = fake.user_name()
-        password = fake.password()
-        balance = random.randint(100, 10000)
+#     conexion= mysql.connect()
+#     cursor = conexion.cursor()
+#     for _ in range(40):
+#         email = fake.email()
+#         first_name = fake.first_name()
+#         last_name = fake.last_name()
+#         username = fake.user_name()
+#         password = fake.password()
+#         balance = random.randint(100, 10000)
         
-        query = "INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES (%s, %s, %s, %s, %s, %s)"
-        values = (email, first_name, last_name, username, password, balance)
-        cursor.execute(query, values)
+#         query = "INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES (%s, %s, %s, %s, %s, %s)"
+#         values = (email, first_name, last_name, username, password, balance)
+#         cursor.execute(query, values)
     
-    conexion.commit()
-    conexion.close()
+#     conexion.commit()
+#     conexion.close()
 
-    click.echo('Base de datos importada con éxito!')
-  except Exception as ex:
-    click.echo('Error al importar la base de datos')
-    click.echo(ex)
+#     click.echo('Base de datos importada con éxito!')
+#   except Exception as ex:
+#     click.echo('Error al importar la base de datos')
+#     click.echo(ex)
 
 
-#Termino de código api rest
 if __name__ == '__main__':
     app.run(debug=True)
 
