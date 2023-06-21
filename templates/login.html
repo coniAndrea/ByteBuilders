@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<link rel="stylesheet" href="/static/login.css">
 <html>
 <head>
     <title>Sistema Bancario - Iniciar Sesión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/login.css">
 </head>
 <body>
     <h1>Iniciar sesión</h1>
     {% if error %}
-        <p style="color: red;">{{ error }}</p>
+        <p class="error">{{ error }}</p>
     {% endif %}
     <form action="{{ url_for('login') }}" method="POST">
         <label for="username">Nombre de usuario:</label>

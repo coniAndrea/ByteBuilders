@@ -9,10 +9,12 @@ body {
 h1 {
     text-align: center;
     color: #000000;
+    margin-top: 20px;
 }
 
 form {
-    width: 300px;
+    width: 90%;
+    max-width: 400px;
     margin: 0 auto;
     background-color: #fff;
     padding: 20px;
@@ -28,7 +30,6 @@ form label {
 }
 
 form input[type="text"],
-form input[type="email"],
 form input[type="password"] {
     width: 100%;
     padding: 8px;
@@ -54,4 +55,5 @@ form input[type="submit"]:hover {
 
 p.error {
     color: red;
+    text-align: center;
 }
