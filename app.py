@@ -6,10 +6,18 @@ from flaskext.mysql import MySQL
 from faker import Faker
 import random
 
+# import others controllers
+from view_client import client
+
 app = Flask(__name__)
+
+# app.register_blueprint(client, url_prefix='/client')
+app.register_blueprint(client, url_prefix='/admin')
+
 app.secret_key = 'your-secret-key'
+
+
 #app.run(host = '192.168.147.166', port = 5000)
-app.run(debug=True)
 fake = Faker('en_US')
 # CONEXIÓN MYSQL
 mysql = MySQL()
@@ -324,7 +332,7 @@ def registrar_usuario():
 #         print(monto)
 #         return jsonify({'message': 'Transferencia exitosa'})
 #     except Exception as ex:
-#         return jsonify({'message':"Error"})        
+#         return jsonify({'message':"Error"})
 
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
@@ -381,7 +389,7 @@ def import_db(file_path):
 # @app.cli.command("import_faker")
 # def import_faker():
 #   try:
-   
+
 #     conexion= mysql.connect()
 #     cursor = conexion.cursor()
 #     for _ in range(40):
@@ -391,11 +399,11 @@ def import_db(file_path):
 #         username = fake.user_name()
 #         password = fake.password()
 #         balance = random.randint(100, 10000)
-        
+
 #         query = "INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES (%s, %s, %s, %s, %s, %s)"
 #         values = (email, first_name, last_name, username, password, balance)
 #         cursor.execute(query, values)
-    
+
 #     conexion.commit()
 #     conexion.close()
 
@@ -406,6 +414,6 @@ def import_db(file_path):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)
 
 
