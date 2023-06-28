@@ -3,14 +3,13 @@ import click
 import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
-from faker import Faker
+#from faker import Faker
 import random
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 #app.run(host = '192.168.147.166', port = 5000)
-app.run(debug=True)
-fake = Faker('en_US')
+#fake = Faker('en_US')
 # CONEXIÓN MYSQL
 mysql = MySQL()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
@@ -220,30 +219,6 @@ def reload_balance():
 
         return redirect('/dashboard')
 
-#@app.route('/pay', methods=['POST'])
-#def make_payment():
- #   username = session.get('username')
- #   if not username:
-  #      return redirect('/login')
-
-   # user = users.get(username)
-   # if not user:
-        #return redirect('/login')
-
-    #amount = int(request.form['amount'])
-    #if amount <= 0 or amount > user['balance']:
-       # error = 'Monto inválido.'
-        #return render_template('dashboard.html', user=user, error=error)
-
-   # user['balance'] -= amount
-
-   # return redirect('/dashboard')
-
-#def generate_card_number():
-    # Generar un número de tarjeta de 16 dígitos
-    #card_number = ''.join(random.choice('0123456789') for _ in range(16))
-    #return card_number
-
 
 #Mostrar los datos de la BD como api
 @app.route('/api/v1/api_saludo', methods=['GET'])
@@ -403,7 +378,6 @@ def import_db(file_path):
 #   except Exception as ex:
 #     click.echo('Error al importar la base de datos')
 #     click.echo(ex)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
