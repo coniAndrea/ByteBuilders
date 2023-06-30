@@ -1,9 +1,24 @@
+import os
+import click
+import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
+from faker import Faker
+import random
+
+# import others controllers
+from view_client import client
 
 app = Flask(__name__)
+
+# app.register_blueprint(client, url_prefix='/client')
+app.register_blueprint(client, url_prefix='/admin')
+
 app.secret_key = 'your-secret-key'
 
+
+# app.run(host = '0.0.0.0', port = 5000)
+fake = Faker('en_US')
 # CONEXIÓN MYSQL
 mysql = MySQL()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
@@ -14,6 +29,7 @@ mysql.init_app(app)
 
 @app.route('/')
 def index():
+
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -54,7 +70,7 @@ def register():
         # Registro BD
         sql="INSERT INTO `users` (`user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance`) VALUES (NULL, %s, %s, %s, %s, %s, 0);"
         datos=(email, first_name, last_name, username, password)
-        
+
         cursor=conexion.cursor()
         cursor.execute(sql, datos)
         conexion.commit()
@@ -99,7 +115,7 @@ def dashboard():
         user = session['user']
         if user:
             return render_template('dashboard.html', user=user)
-    
+
     return redirect('/login')
 
 @app.route('/logout')
@@ -171,6 +187,89 @@ def transfer():
 
     return render_template('transfer.html', user=sender)
 
+
+@app.route('/transfer_api', methods=['GET', 'POST'])
+def transfer_api():
+    # if 'user' in session:
+    #     sender = session['user']
+    #     # print('asdasd')
+    #     return render_template('transfer_api.html', user=sender)
+
+    # sender_username = session.get('username')
+    # if not sender_username:
+    #     return redirect('/login')
+
+    # conn = mysql.connect()
+    # cursor = conn.cursor()
+
+    # sql = "SELECT * FROM users WHERE username = %s"
+    # cursor.execute(sql, (sender_username,))
+    # sender_data = cursor.fetchone()
+
+    # if not sender_data:
+    #     return redirect('/login')
+
+    # sender = {
+    #     'username': sender_data[4],
+    #     'email': sender_data[1],
+    #     'first_name': sender_data[2],
+    #     'last_name': sender_data[3],
+    #     'balance': sender_data[6]
+    # }
+
+    if request.method == 'POST':
+        receiver_username = request.form['receiver']
+        amount = int(request.form['amount'])
+
+        print(request.data)
+        response = requests.post("https://musicpro.bemtorres.win/api/v1/tarjeta/transferir",
+            data = {
+                'tarjeta_origen': 'ninoska',
+                'tarjeta_destino': receiver_username,
+                'comentario':'PAGO NINOSKA PAY',
+                'monto': amount,
+                'codigo':'DEMOMUSICPRO',
+                'token':'NIN-2707e',
+            }
+        )
+        print(response)
+        resp = response.json()
+        return resp
+
+
+        sql = "SELECT * FROM users WHERE username = %s"
+        cursor.execute(sql, (receiver_username,))
+        receiver_data = cursor.fetchone()
+
+        if not receiver_data:
+            error = 'El destinatario no existe.'
+            return render_template('transfer_api.html', user=sender, error=error)
+
+        receiver = {
+            'username': receiver_data[4],
+            'email': receiver_data[1],
+            'first_name': receiver_data[2],
+            'last_name': receiver_data[3],
+            'balance': receiver_data[6]
+        }
+
+        if amount <= 0 or amount > sender['balance']:
+            error = 'Monto inválido.'
+            return render_template('transfer_api.html', user=sender, error=error)
+
+        sender['balance'] -= amount
+        receiver['balance'] += amount
+
+        sql = "UPDATE users SET balance = %s WHERE username = %s"
+        cursor.execute(sql, (sender['balance'], sender['username']))
+        cursor.execute(sql, (receiver['balance'], receiver['username']))
+        conn.commit()
+
+        return redirect('/dashboard')
+
+    return render_template('transfer_api.html')
+
+
 @app.route('/reload', methods=['GET', 'POST'])
 def reload_balance():
     if 'user' in session:
@@ -236,9 +335,42 @@ def reload_balance():
     #card_number = ''.join(random.choice('0123456789') for _ in range(16))
     #return card_number
 
-    
+
 #Mostrar los datos de la BD como api
-@app.route('/usuario', methods=['GET'])
+@app.route('/api/v1/api_saludo', methods=['GET'])
+def api_saludo():
+    # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")
+    response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saldo")
+    # print(response)
+    resp = response.json()
+    return str(resp["saldo"])
+    # return resp['message']
+
+# INTEGRACIÓN API TRANSFERENCIA
+@app.route('/api/v1/transferencia', methods=['POST'])
+def api_transferencia():
+    # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")x
+    # response = requests
+    print('funciona funciona funciona funciona ')
+    print(request.data)
+    return "ok"
+    # return resp['message']
+
+@app.route('/api/v1/correo', methods=['GET'])
+def api_correo():
+    response = requests.post("https://musicpro.bemtorres.win/api/v1/musicpro/send_email",
+                                data = {
+                                    'correo':'di.toro@duocuc.cl',
+                                    'asunto':'reprobado',
+                                    'contenido':'ha reprobado :( nos vemos en TAV'
+                                }
+                            )
+    # print(response)
+    resp = response.json()
+    return resp
+    # return resp['message']
+
+@app.route('/api/v1/usuario', methods=['GET'])
 def listar_usuarios_registrados():
     try:
         conexion= mysql.connect()
@@ -253,8 +385,8 @@ def listar_usuarios_registrados():
         return jsonify({'Usuarios':usuarios, 'message':"Listado de Usuarios Registrados."})
     except Exception as ex:
         return jsonify({'message':"Error al Cargar"})
-    
-@app.route('/usuario/<codigo>', methods=['GET'])
+
+@app.route('/api/v1/usuario/<codigo>', methods=['GET'])
 def leer_usuario(codigo):
     try:
         conexion= mysql.connect()
@@ -269,7 +401,7 @@ def leer_usuario(codigo):
             return jsonify({'message':"Usuario no encontrado."})
     except Exception as ex:
         return jsonify({'message':"Error"})
-    
+
 @app.route('/usuario', methods=['POST'])
 def registrar_usuario():
     try:
@@ -281,7 +413,20 @@ def registrar_usuario():
         return jsonify({'message':"Usuario Registrado"})
     except Exception as ex:
         return jsonify({'message':"Error"})
-    
+
+# @app.route('/api/v1/transferencia', methods=['POST'])
+# def api_transferencia():
+#     try:
+#         cuenta_origen = request.json.get('cuenta_origen')
+#         cuenta_destino = request.json.get('cuenta_destino')
+#         monto = request.json.get('monto')
+#         print(cuenta_origen)
+#         print(cuenta_destino)
+#         print(monto)
+#         return jsonify({'message': 'Transferencia exitosa'})
+#     except Exception as ex:
+#         return jsonify({'message':"Error"})
+
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
     try:
@@ -292,8 +437,8 @@ def eliminar_usuario(codigo):
         conexion.commit()
         return jsonify({'message':"Usuario Eliminado"})
     except Exception as ex:
-        return jsonify({'message':"Error"})      
-    
+        return jsonify({'message':"Error"})
+
 @app.route('/usuario/<codigo>', methods=['PUT'])
 def actualizar_usuario(codigo):
     try:
@@ -304,8 +449,64 @@ def actualizar_usuario(codigo):
         conexion.commit()
         return jsonify({'message':"Usuario Actualizado"})
     except Exception as ex:
-        return jsonify({'message':"Error"})    
-    
-#Termino de código api rest
+        return jsonify({'message':"Error"})
+
+
+@app.cli.command("import_db")
+@click.argument('file_path', default=os.path.join('bd', 'database.sql'))
+def import_db(file_path):
+  try:
+    conexion= mysql.connect()
+    cursor = conexion.cursor()
+
+    # Leer el contenido del archivo SQL
+    with open(file_path, 'r',  encoding='utf-8') as f:
+      sql_script = f.read()
+
+    # Separar las declaraciones SQL individuales
+    statements = sql_script.split(';')
+
+    # Ejecutar cada declaración SQL
+    for statement in statements:
+      if statement.strip():
+        cursor.execute(statement)
+
+    conexion.commit()
+    conexion.close()
+
+    click.echo('Base de datos importada con éxito!')
+  except Exception as ex:
+    click.echo('Error al importar la base de datos')
+    click.echo(ex)
+
+# @app.cli.command("import_faker")
+# def import_faker():
+#   try:
+
+#     conexion= mysql.connect()
+#     cursor = conexion.cursor()
+#     for _ in range(40):
+#         email = fake.email()
+#         first_name = fake.first_name()
+#         last_name = fake.last_name()
+#         username = fake.user_name()
+#         password = fake.password()
+#         balance = random.randint(100, 10000)
+
+#         query = "INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES (%s, %s, %s, %s, %s, %s)"
+#         values = (email, first_name, last_name, username, password, balance)
+#         cursor.execute(query, values)
+
+#     conexion.commit()
+#     conexion.close()
+
+#     click.echo('Base de datos importada con éxito!')
+#   except Exception as ex:
+#     click.echo('Error al importar la base de datos')
+#     click.echo(ex)
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)
+
+

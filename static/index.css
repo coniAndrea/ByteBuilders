@@ -1,5 +1,4 @@
-html,
-body {
+html, body {
     height: 100%;
     margin: 0;
 }
@@ -26,10 +25,13 @@ body {
     margin-top: 20px;
 }
 
+.links {
+    margin-top: 10px;
+}
+
 a {
     color: #bdadf3;
     text-decoration: none;
-    margin-top: 10px;
     display: inline-block;
     padding: 5px 10px;
     border: 1px solid #bdadf3;
@@ -39,4 +41,17 @@ a {
 a:hover {
     background-color: #b1d8fe;
     color: #ef03cb;
+}
+
+/* Media queries */
+@media only screen and (max-width: 600px) {
+    .content h1 {
+        font-size: 24px;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+    .content h1 {
+        font-size: 20px;
+    }
 }

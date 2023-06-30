@@ -9,10 +9,12 @@ body {
 h1 {
     text-align: center;
     color: #000000;
+    margin-top: 20px;
 }
 
 form {
-    width: 300px;
+    width: 90%;
+    max-width: 400px;
     margin: 0 auto;
     background-color: #fff;
     padding: 20px;
@@ -53,4 +55,15 @@ form input[type="submit"]:hover {
 
 p.error {
     color: red;
+    text-align: center;
 }
+/* Estilos responsivos */
+@media screen and (max-width: 768px) {
+    .col-md-4 {
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        margin-bottom: 10px;
+    }
+  }
+  
