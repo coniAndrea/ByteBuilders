@@ -5,9 +5,16 @@ from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
 
+# import others controllers
+from view_client import client
+
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
-#app.run(host = '192.168.147.166', port = 5000)
+
+# app.register_blueprint(client, url_prefix='/client')
+app.register_blueprint(client, url_prefix='/admin')
+
+app.secret_key = 'your-secret-key' = 5000)
+
 
 # CONEXIÓN MYSQL
 mysql = MySQL()
@@ -178,6 +185,89 @@ def transfer():
 
     return render_template('transfer.html', user=sender)
 
+
+@app.route('/transfer_api', methods=['GET', 'POST'])
+def transfer_api():
+    # if 'user' in session:
+    #     sender = session['user']
+    #     # print('asdasd')
+    #     return render_template('transfer_api.html', user=sender)
+
+    # sender_username = session.get('username')
+    # if not sender_username:
+    #     return redirect('/login')
+
+    # conn = mysql.connect()
+    # cursor = conn.cursor()
+
+    # sql = "SELECT * FROM users WHERE username = %s"
+    # cursor.execute(sql, (sender_username,))
+    # sender_data = cursor.fetchone()
+
+    # if not sender_data:
+    #     return redirect('/login')
+
+    # sender = {
+    #     'username': sender_data[4],
+    #     'email': sender_data[1],
+    #     'first_name': sender_data[2],
+    #     'last_name': sender_data[3],
+    #     'balance': sender_data[6]
+    # }
+
+    if request.method == 'POST':
+        receiver_username = request.form['receiver']
+        amount = int(request.form['amount'])
+
+        print(request.data)
+        response = requests.post("https://musicpro.bemtorres.win/api/v1/tarjeta/transferir",
+            data = {
+                'tarjeta_origen': 'ninoska',
+                'tarjeta_destino': receiver_username,
+                'comentario':'PAGO NINOSKA PAY',
+                'monto': amount,
+                'codigo':'DEMOMUSICPRO',
+                'token':'NIN-2707e',
+            }
+        )
+        print(response)
+        resp = response.json()
+        return resp
+
+
+        sql = "SELECT * FROM users WHERE username = %s"
+        cursor.execute(sql, (receiver_username,))
+        receiver_data = cursor.fetchone()
+
+        if not receiver_data:
+            error = 'El destinatario no existe.'
+            return render_template('transfer_api.html', user=sender, error=error)
+
+        receiver = {
+            'username': receiver_data[4],
+            'email': receiver_data[1],
+            'first_name': receiver_data[2],
+            'last_name': receiver_data[3],
+            'balance': receiver_data[6]
+        }
+
+        if amount <= 0 or amount > sender['balance']:
+            error = 'Monto inválido.'
+            return render_template('transfer_api.html', user=sender, error=error)
+
+        sender['balance'] -= amount
+        receiver['balance'] += amount
+
+        sql = "UPDATE users SET balance = %s WHERE username = %s"
+        cursor.execute(sql, (sender['balance'], sender['username']))
+        cursor.execute(sql, (receiver['balance'], receiver['username']))
+        conn.commit()
+
+        return redirect('/dashboard')
+
+    return render_template('transfer_api.html')
+
+
 @app.route('/reload', methods=['GET', 'POST'])
 def reload_balance():
     if 'user' in session:
@@ -228,6 +318,16 @@ def api_saludo():
     # print(response)
     resp = response.json()
     return str(resp["saldo"])
+    # return resp['message']
+
+# INTEGRACIÓN API TRANSFERENCIA
+@app.route('/api/v1/transferencia', methods=['POST'])
+def api_transferencia():
+    # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")x
+    # response = requests
+    print('funciona funciona funciona funciona ')
+    print(request.data)
+    return "ok"
     # return resp['message']
 
 @app.route('/api/v1/correo', methods=['GET'])
@@ -288,7 +388,7 @@ def registrar_usuario():
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-  
+
 
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
@@ -344,6 +444,6 @@ def import_db(file_path):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+  app.run(debug=True)
 
 

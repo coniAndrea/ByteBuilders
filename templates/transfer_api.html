@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema Bancario</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="/static/servicios.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <form action="{{ url_for('transfer_api') }}" method="POST">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4"></div>
+                <div class="col-md-4">
+                    <br>
+                    <div class="card">
+                        <div class="card-header">
+                            <a class="back-button" href="{{ url_for('dashboard')}}">
+                                <i class="fas fa-arrow-left" style="color: #993cd7;"></i>
+                            </a>
+                            <h3>Transferencia de fondos</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="receiver" class="form-label">Destinatario</label><br>
+                                 <input type="text" class="form-control" id="receiver" name="receiver" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Monto a transferir</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="text" id="amount" name="amount" required>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted">
+                                <div class="button-container">
+                                    <button type="submit" class="btn" value="Transferir">Transferir</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4"></div>
+            </div>
+        </div>
+    </form>
+    
+</body>
+</html>
