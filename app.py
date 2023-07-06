@@ -3,7 +3,6 @@ import click
 import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
-from faker import Faker
 import random
 
 # import others controllers
@@ -14,11 +13,9 @@ app = Flask(__name__)
 # app.register_blueprint(client, url_prefix='/client')
 app.register_blueprint(client, url_prefix='/admin')
 
-app.secret_key = 'your-secret-key'
+app.secret_key = 'your-secret-key' = 5000)
 
 
-# app.run(host = '0.0.0.0', port = 5000)
-fake = Faker('en_US')
 # CONEXIÓN MYSQL
 mysql = MySQL()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
@@ -123,6 +120,7 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
+#
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
     if 'user' in session:
@@ -311,30 +309,6 @@ def reload_balance():
 
         return redirect('/dashboard')
 
-#@app.route('/pay', methods=['POST'])
-#def make_payment():
- #   username = session.get('username')
- #   if not username:
-  #      return redirect('/login')
-
-   # user = users.get(username)
-   # if not user:
-        #return redirect('/login')
-
-    #amount = int(request.form['amount'])
-    #if amount <= 0 or amount > user['balance']:
-       # error = 'Monto inválido.'
-        #return render_template('dashboard.html', user=user, error=error)
-
-   # user['balance'] -= amount
-
-   # return redirect('/dashboard')
-
-#def generate_card_number():
-    # Generar un número de tarjeta de 16 dígitos
-    #card_number = ''.join(random.choice('0123456789') for _ in range(16))
-    #return card_number
-
 
 #Mostrar los datos de la BD como api
 @app.route('/api/v1/api_saludo', methods=['GET'])
@@ -414,18 +388,7 @@ def registrar_usuario():
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-# @app.route('/api/v1/transferencia', methods=['POST'])
-# def api_transferencia():
-#     try:
-#         cuenta_origen = request.json.get('cuenta_origen')
-#         cuenta_destino = request.json.get('cuenta_destino')
-#         monto = request.json.get('monto')
-#         print(cuenta_origen)
-#         print(cuenta_destino)
-#         print(monto)
-#         return jsonify({'message': 'Transferencia exitosa'})
-#     except Exception as ex:
-#         return jsonify({'message':"Error"})
+
 
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
@@ -478,32 +441,6 @@ def import_db(file_path):
   except Exception as ex:
     click.echo('Error al importar la base de datos')
     click.echo(ex)
-
-# @app.cli.command("import_faker")
-# def import_faker():
-#   try:
-
-#     conexion= mysql.connect()
-#     cursor = conexion.cursor()
-#     for _ in range(40):
-#         email = fake.email()
-#         first_name = fake.first_name()
-#         last_name = fake.last_name()
-#         username = fake.user_name()
-#         password = fake.password()
-#         balance = random.randint(100, 10000)
-
-#         query = "INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES (%s, %s, %s, %s, %s, %s)"
-#         values = (email, first_name, last_name, username, password, balance)
-#         cursor.execute(query, values)
-
-#     conexion.commit()
-#     conexion.close()
-
-#     click.echo('Base de datos importada con éxito!')
-#   except Exception as ex:
-#     click.echo('Error al importar la base de datos')
-#     click.echo(ex)
 
 
 if __name__ == '__main__':
