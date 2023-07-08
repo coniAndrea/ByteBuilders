@@ -4,8 +4,10 @@ import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
-from webpay import webpay.webpay_plus #.webpay_plus
-from webpay import TransactionCreateResponse #.webpay_plus.transactions
+from webpay import WebPay.webpay_plus
+#from webpay.webpay_plus import WebpayPlus
+#.webpay_plus.transactions
+#from webpay.trasaction import TransactionCreateResponse
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -114,7 +116,6 @@ def dashboard():
 def logout():
     session.pop('username', None)
     return redirect('/')
-
 
 
 # Configura la integración de Webpay con los detalles de tu comercio
