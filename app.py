@@ -4,8 +4,8 @@ import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
-from webpay.webpay_plus import WebpayPlus
-from webpay.webpay_plus.transactions import TransactionCreateResponse
+from webpay import WebpayPlus #.webpay_plus
+from webpay import TransactionCreateResponse #.webpay_plus.transactions
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
