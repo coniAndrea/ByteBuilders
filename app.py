@@ -4,7 +4,7 @@ import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
-from webpay import WebpayPlus #.webpay_plus
+from webpay import webpay.webpay_plus #.webpay_plus
 from webpay import TransactionCreateResponse #.webpay_plus.transactions
 
 app = Flask(__name__)
