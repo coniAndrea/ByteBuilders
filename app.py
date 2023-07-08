@@ -115,6 +115,8 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
+
+
 # Configura la integración de Webpay con los detalles de tu comercio
 webpay_plus = WebpayPlus(
     commerce_code='tu_codigo_de_comercio',
