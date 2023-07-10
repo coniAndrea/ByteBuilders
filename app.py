@@ -3,22 +3,12 @@ import click
 import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
-from faker import Faker
 import random
 
-# import others controllers
-from view_client import client
-
 app = Flask(__name__)
-
-# app.register_blueprint(client, url_prefix='/client')
-app.register_blueprint(client, url_prefix='/admin')
-
 app.secret_key = 'your-secret-key'
+#app.run(host = '192.168.147.166', port = 5000)
 
-
-# app.run(host = '0.0.0.0', port = 5000)
-fake = Faker('en_US')
 # CONEXIÓN MYSQL
 mysql = MySQL()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
@@ -123,6 +113,16 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
+
+# Configura la integración de Webpay con los detalles de tu comercio
+# webpay_plus = WebpayPlus(
+#     commerce_code='tu_codigo_de_comercio',
+#     api_key='tu_api_key',
+#     integration_type='TEST',  # Cambia a 'LIVE' en producción
+#     return_url='https://tu_url_de_retorno.com'
+# )
+
+
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
     if 'user' in session:
@@ -175,100 +175,18 @@ def transfer():
             error = 'Monto inválido.'
             return render_template('transfer.html', user=sender, error=error)
 
-        sender['balance'] -= amount
-        receiver['balance'] += amount
+        # # Crea la transacción utilizando WebpayPlus
+        # transaction = webpay_plus.TransactionCreate(
+        #     buy_order='orden_de_compra',
+        #     session_id='ID_de_sesion',
+        #     amount=amount,
+        #     return_url=webpay_plus.return_url
+        # )
 
-        sql = "UPDATE users SET balance = %s WHERE username = %s"
-        cursor.execute(sql, (sender['balance'], sender['username']))
-        cursor.execute(sql, (receiver['balance'], receiver['username']))
-        conn.commit()
-
-        return redirect('/dashboard')
+        # # Redirige al usuario a la URL de Webpay para completar el pago
+        # return redirect(transaction.url)
 
     return render_template('transfer.html', user=sender)
-
-
-@app.route('/transfer_api', methods=['GET', 'POST'])
-def transfer_api():
-    # if 'user' in session:
-    #     sender = session['user']
-    #     # print('asdasd')
-    #     return render_template('transfer_api.html', user=sender)
-
-    # sender_username = session.get('username')
-    # if not sender_username:
-    #     return redirect('/login')
-
-    # conn = mysql.connect()
-    # cursor = conn.cursor()
-
-    # sql = "SELECT * FROM users WHERE username = %s"
-    # cursor.execute(sql, (sender_username,))
-    # sender_data = cursor.fetchone()
-
-    # if not sender_data:
-    #     return redirect('/login')
-
-    # sender = {
-    #     'username': sender_data[4],
-    #     'email': sender_data[1],
-    #     'first_name': sender_data[2],
-    #     'last_name': sender_data[3],
-    #     'balance': sender_data[6]
-    # }
-
-    if request.method == 'POST':
-        receiver_username = request.form['receiver']
-        amount = int(request.form['amount'])
-
-        print(request.data)
-        response = requests.post("https://musicpro.bemtorres.win/api/v1/tarjeta/transferir",
-            data = {
-                'tarjeta_origen': 'ninoska',
-                'tarjeta_destino': receiver_username,
-                'comentario':'PAGO NINOSKA PAY',
-                'monto': amount,
-                'codigo':'DEMOMUSICPRO',
-                'token':'NIN-2707e',
-            }
-        )
-        print(response)
-        resp = response.json()
-        return resp
-
-
-        sql = "SELECT * FROM users WHERE username = %s"
-        cursor.execute(sql, (receiver_username,))
-        receiver_data = cursor.fetchone()
-
-        if not receiver_data:
-            error = 'El destinatario no existe.'
-            return render_template('transfer_api.html', user=sender, error=error)
-
-        receiver = {
-            'username': receiver_data[4],
-            'email': receiver_data[1],
-            'first_name': receiver_data[2],
-            'last_name': receiver_data[3],
-            'balance': receiver_data[6]
-        }
-
-        if amount <= 0 or amount > sender['balance']:
-            error = 'Monto inválido.'
-            return render_template('transfer_api.html', user=sender, error=error)
-
-        sender['balance'] -= amount
-        receiver['balance'] += amount
-
-        sql = "UPDATE users SET balance = %s WHERE username = %s"
-        cursor.execute(sql, (sender['balance'], sender['username']))
-        cursor.execute(sql, (receiver['balance'], receiver['username']))
-        conn.commit()
-
-        return redirect('/dashboard')
-
-    return render_template('transfer_api.html')
-
 
 @app.route('/reload', methods=['GET', 'POST'])
 def reload_balance():
@@ -304,36 +222,26 @@ def reload_balance():
             error = 'Monto inválido.'
             return render_template('reload.html', user=user, error=error)
 
-        new_balance = user['balance'] + amount
-        sql = "UPDATE users SET balance = %s WHERE username = %s"
-        cursor.execute(sql, (new_balance, user['username']))
-        conn.commit()
+        # # Crea la transacción utilizando WebpayPlus
+        # transaction = webpay_plus.TransactionCreate(
+        #     buy_order='orden_de_compra',
+        #     session_id='ID_de_sesion',
+        #     amount=amount,
+        #     return_url=webpay_plus.return_url
+        # )
 
-        return redirect('/dashboard')
+        # # Redirige al usuario a la URL de Webpay para completar el pago
+        # return redirect(transaction.url)
 
-#@app.route('/pay', methods=['POST'])
-#def make_payment():
- #   username = session.get('username')
- #   if not username:
-  #      return redirect('/login')
+    return render_template('reload.html', user=user)
 
-   # user = users.get(username)
-   # if not user:
-        #return redirect('/login')
+@app.route('/retorno', methods=['GET'])
+def retorno():
+    if 'user' in session:
+        user = session['user']
+        return render_template('retorno.html', user=user)
 
-    #amount = int(request.form['amount'])
-    #if amount <= 0 or amount > user['balance']:
-       # error = 'Monto inválido.'
-        #return render_template('dashboard.html', user=user, error=error)
-
-   # user['balance'] -= amount
-
-   # return redirect('/dashboard')
-
-#def generate_card_number():
-    # Generar un número de tarjeta de 16 dígitos
-    #card_number = ''.join(random.choice('0123456789') for _ in range(16))
-    #return card_number
+    return redirect('/login')
 
 
 #Mostrar los datos de la BD como api
@@ -344,16 +252,6 @@ def api_saludo():
     # print(response)
     resp = response.json()
     return str(resp["saldo"])
-    # return resp['message']
-
-# INTEGRACIÓN API TRANSFERENCIA
-@app.route('/api/v1/transferencia', methods=['POST'])
-def api_transferencia():
-    # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")x
-    # response = requests
-    print('funciona funciona funciona funciona ')
-    print(request.data)
-    return "ok"
     # return resp['message']
 
 @app.route('/api/v1/correo', methods=['GET'])
@@ -414,18 +312,7 @@ def registrar_usuario():
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-# @app.route('/api/v1/transferencia', methods=['POST'])
-# def api_transferencia():
-#     try:
-#         cuenta_origen = request.json.get('cuenta_origen')
-#         cuenta_destino = request.json.get('cuenta_destino')
-#         monto = request.json.get('monto')
-#         print(cuenta_origen)
-#         print(cuenta_destino)
-#         print(monto)
-#         return jsonify({'message': 'Transferencia exitosa'})
-#     except Exception as ex:
-#         return jsonify({'message':"Error"})
+  
 
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
@@ -479,34 +366,7 @@ def import_db(file_path):
     click.echo('Error al importar la base de datos')
     click.echo(ex)
 
-# @app.cli.command("import_faker")
-# def import_faker():
-#   try:
-
-#     conexion= mysql.connect()
-#     cursor = conexion.cursor()
-#     for _ in range(40):
-#         email = fake.email()
-#         first_name = fake.first_name()
-#         last_name = fake.last_name()
-#         username = fake.user_name()
-#         password = fake.password()
-#         balance = random.randint(100, 10000)
-
-#         query = "INSERT INTO users (email, first_name, last_name, username, password, balance) VALUES (%s, %s, %s, %s, %s, %s)"
-#         values = (email, first_name, last_name, username, password, balance)
-#         cursor.execute(query, values)
-
-#     conexion.commit()
-#     conexion.close()
-
-#     click.echo('Base de datos importada con éxito!')
-#   except Exception as ex:
-#     click.echo('Error al importar la base de datos')
-#     click.echo(ex)
-
 
 if __name__ == '__main__':
-  app.run(debug=True)
-
+    app.run(debug=True)
 
