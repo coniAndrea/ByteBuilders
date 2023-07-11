@@ -4,10 +4,6 @@ import requests
 from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
-from webpay import WebPay.webpay_plus
-#from webpay.webpay_plus import WebpayPlus
-#.webpay_plus.transactions
-#from webpay.trasaction import TransactionCreateResponse
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
@@ -118,15 +114,6 @@ def logout():
     return redirect('/')
 
 
-# Configura la integración de Webpay con los detalles de tu comercio
-webpay_plus = WebpayPlus(
-    commerce_code='tu_codigo_de_comercio',
-    api_key='tu_api_key',
-    integration_type='TEST',  # Cambia a 'LIVE' en producción
-    return_url='https://tu_url_de_retorno.com'
-)
-
-
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
     if 'user' in session:
@@ -179,16 +166,8 @@ def transfer():
             error = 'Monto inválido.'
             return render_template('transfer.html', user=sender, error=error)
 
-        # Crea la transacción utilizando WebpayPlus
-        transaction = webpay_plus.TransactionCreate(
-            buy_order='orden_de_compra',
-            session_id='ID_de_sesion',
-            amount=amount,
-            return_url=webpay_plus.return_url
-        )
-
         # Redirige al usuario a la URL de Webpay para completar el pago
-        return redirect(transaction.url)
+        #return redirect(transaction.url)
 
     return render_template('transfer.html', user=sender)
 
@@ -226,16 +205,9 @@ def reload_balance():
             error = 'Monto inválido.'
             return render_template('reload.html', user=user, error=error)
 
-        # Crea la transacción utilizando WebpayPlus
-        transaction = webpay_plus.TransactionCreate(
-            buy_order='orden_de_compra',
-            session_id='ID_de_sesion',
-            amount=amount,
-            return_url=webpay_plus.return_url
-        )
-
+        
         # Redirige al usuario a la URL de Webpay para completar el pago
-        return redirect(transaction.url)
+        #return redirect(transaction.url)
 
     return render_template('reload.html', user=user)
 
