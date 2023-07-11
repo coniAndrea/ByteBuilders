@@ -5,11 +5,17 @@ from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
 
+# import others controllers
+from view_client import client
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key'
-#app.run(host = '192.168.147.166', port = 5000)
 
+# app.register_blueprint(client, url_prefix='/client')
+app.register_blueprint(client, url_prefix='/admin')
+
+app.secret_key = 'your-secret-key'
+
+# app.run(host = '0.0.0.0', port = 5000)
 # CONEXIÓN MYSQL
 mysql = MySQL()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
@@ -114,7 +120,6 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
-
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
     if 'user' in session:
@@ -167,10 +172,41 @@ def transfer():
             error = 'Monto inválido.'
             return render_template('transfer.html', user=sender, error=error)
 
-        # Redirige al usuario a la URL de Webpay para completar el pago
-        #return redirect(transaction.url)
+        sender['balance'] -= amount
+        receiver['balance'] += amount
+
+        sql = "UPDATE users SET balance = %s WHERE username = %s"
+        cursor.execute(sql, (sender['balance'], sender['username']))
+        cursor.execute(sql, (receiver['balance'], receiver['username']))
+        conn.commit()
+
+        return redirect('/dashboard')
 
     return render_template('transfer.html', user=sender)
+
+@app.route('/transfer_api', methods=['GET', 'POST'])
+def transfer_api():
+
+    if request.method == 'POST':
+        receiver_username = request.form['receiver']
+        amount = int(request.form['amount'])
+
+        print(request.data)
+        response = requests.post("https://musicpro.bemtorres.win/api/v1/tarjeta/transferir",
+            data = {
+                'tarjeta_origen': 'ninoska',
+                'tarjeta_destino': receiver_username,
+                'comentario':'PAGO NINOSKA PAY',
+                'monto': amount,
+                'codigo':'DEMOMUSICPRO',
+                'token':'NIN-2707e',
+            }
+        )
+        print(response)
+        resp = response.json()
+        return resp
+
+    return render_template('transfer_api.html')
 
 @app.route('/reload', methods=['GET', 'POST'])
 def reload_balance():
@@ -206,23 +242,14 @@ def reload_balance():
             error = 'Monto inválido.'
             return render_template('reload.html', user=user, error=error)
 
-        
-        # Redirige al usuario a la URL de Webpay para completar el pago
-        #return redirect(transaction.url)
+        new_balance = user['balance'] + amount
+        sql = "UPDATE users SET balance = %s WHERE username = %s"
+        cursor.execute(sql, (new_balance, user['username']))
+        conn.commit()
 
-    return render_template('reload.html', user=user)
+        return redirect('/dashboard')
 
-@app.route('/retorno', methods=['GET'])
-def retorno():
-    if 'user' in session:
-        user = session['user']
-        return render_template('retorno.html', user=user)
-
-    return redirect('/login')
-
-
-#Mostrar los datos de la BD como api
-@app.route('/api/v1/api_saludo', methods=['GET'])
+@app.route('/api/v1/api_saldo', methods=['GET'])
 def api_saludo():
     # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")
     response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saldo")
@@ -230,6 +257,14 @@ def api_saludo():
     resp = response.json()
     return str(resp["saldo"])
     # return resp['message']
+
+# INTEGRACIÓN API TRANSFERENCIA
+@app.route('/api/v1/transferencia', methods=['POST'])
+def api_transferencia():
+    # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")x
+    print('funciona funciona funciona funciona ')
+    print(request.data)
+    return "ok"
 
 @app.route('/api/v1/correo', methods=['GET'])
 def api_correo():
@@ -240,11 +275,10 @@ def api_correo():
                                     'contenido':'ha reprobado :( nos vemos en TAV'
                                 }
                             )
-    # print(response)
     resp = response.json()
     return resp
-    # return resp['message']
 
+#Mostrar los datos de la BD como api
 @app.route('/api/v1/usuario', methods=['GET'])
 def listar_usuarios_registrados():
     try:
@@ -277,7 +311,7 @@ def leer_usuario(codigo):
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-@app.route('/usuario', methods=['POST'])
+@app.route('/api/v1/usuario', methods=['POST'])
 def registrar_usuario():
     try:
         conexion= mysql.connect()
@@ -289,9 +323,7 @@ def registrar_usuario():
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-  
-
-@app.route('/usuario/<codigo>', methods=['DELETE'])
+@app.route('/api/v1/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
     try:
         conexion= mysql.connect()
@@ -303,7 +335,7 @@ def eliminar_usuario(codigo):
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-@app.route('/usuario/<codigo>', methods=['PUT'])
+@app.route('/api/v1/usuario/<codigo>', methods=['PUT'])
 def actualizar_usuario(codigo):
     try:
         conexion= mysql.connect()
@@ -315,7 +347,7 @@ def actualizar_usuario(codigo):
     except Exception as ex:
         return jsonify({'message':"Error"})
 
-
+#IMPORTAR BASE DE DATO
 @app.cli.command("import_db")
 @click.argument('file_path', default=os.path.join('bd', 'database.sql'))
 def import_db(file_path):
@@ -343,8 +375,5 @@ def import_db(file_path):
     click.echo('Error al importar la base de datos')
     click.echo(ex)
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
-
-
+  app.run(debug=True)
