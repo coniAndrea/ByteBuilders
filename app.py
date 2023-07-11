@@ -5,8 +5,6 @@ from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
 
-# import others controllers
-from view_client import client
 
 app = Flask(__name__)
 
