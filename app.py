@@ -5,7 +5,6 @@ from flask import Flask, render_template, request, session, redirect, jsonify
 from flaskext.mysql import MySQL
 import random
 
-
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 #app.run(host = '192.168.147.166', port = 5000)
