@@ -348,6 +348,7 @@ def actualizar_usuario(codigo):
         return jsonify({'message':"Usuario Actualizado"})
     except Exception as ex:
         return jsonify({'message':"Error"})
+    
 #INTEGRACION CON PAYPAL
 class CreateOrderViewRemote(MethodView):
     def post(self):

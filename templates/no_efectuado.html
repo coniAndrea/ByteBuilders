@@ -1,0 +1,34 @@
+
+El código HTML que has proporcionado parece estar bien estructurado. Sin embargo, hay algunos elementos y clases que necesitan ser ajustados para que funcionen correctamente.
+
+Aquí tienes el código HTML corregido:
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No Efectuado</title>
+    <!-- Bootstrap CSS v5.2.1 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="/static/Paypal.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <a class="back-button" href="{{ url_for('dashboard')}}">
+                <i class="fas fa-arrow-left back-icon"></i>
+            </a>
+        </div>
+        <h1>No Pago/ Transferencia/ Recarga Efectuado</h1>
+        <p>¡Su movimiento NO fue ejecutado de forma correcta!</p>
+    </div>
+</body>
+</html>
