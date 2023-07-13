@@ -24,7 +24,9 @@ app.register_blueprint(client, url_prefix='/admin')
 app.secret_key = 'your-secret-key'
 
 # app.run(host = '0.0.0.0', port = 5000)
+
 # CONEXIÓN MYSQL
+
 mysql = MySQL()
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 app.config['MYSQL_DATABASE_USER'] = 'root'
@@ -34,13 +36,12 @@ mysql.init_app(app)
 
 @app.route('/')
 def index():
-
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    conexion= mysql.connect()
-    print(conexion)
+    conexion = mysql.connect()
+
     if request.method == 'POST':
         email = request.form['email']
         first_name = request.form['first_name']
@@ -49,39 +50,38 @@ def register():
         password = request.form['password']
         confirm_password = request.form['confirm_password']
 
-        # Validar que todos los campos estén completos
         if not (email and first_name and last_name and username and password and confirm_password):
             error = 'Por favor, completa todos los campos.'
             return render_template('register.html', error=error)
 
-        # Validar que el usuario no exista
-        conexion = mysql.connect()
         cursor = conexion.cursor()
-
-        sql = "SELECT * FROM users WHERE username = %s "
-        datos = (username)
+        sql = "SELECT * FROM users WHERE username = %s"
+        datos = (username,)
         cursor.execute(sql, datos)
         user = cursor.fetchone()
 
-        if username=="username":
+        if user:
             error = 'El nombre de usuario ya está en uso.'
             return render_template('register.html', error=error)
 
-        # Validar que las contraseñas coincidan
         if password != confirm_password:
             error = 'Las contraseñas no coinciden.'
             return render_template('register.html', error=error)
 
-        # Registro BD
-        sql="INSERT INTO `users` (`user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance`) VALUES (NULL, %s, %s, %s, %s, %s, 0);"
-        datos=(email, first_name, last_name, username, password)
-
-        cursor=conexion.cursor()
+        sql = "INSERT INTO `users` (`user_id`, `email`, `first_name`, `last_name`, `username`, `password`, `balance`) VALUES (NULL, %s, %s, %s, %s, %s, 0)"
+        datos = (email, first_name, last_name, username, password)
         cursor.execute(sql, datos)
         conexion.commit()
 
-        session['username'] = user
-        return redirect('/dashboard')
+        session['user'] = {
+            'username': username,
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'balance': 0
+        }
+
+        return redirect('/login')
 
     return render_template('register.html')
 
@@ -116,20 +116,43 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    if 'user' in session:
-        user = session['user']
-        if user:
-            return render_template('dashboard.html', user=user)
+    user = session.get('user')
 
-    return redirect('/login')
+    if not user:
+        return redirect('/login')
+
+    return render_template('dashboard.html', user=user)
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
+    session.pop('user', None)
     return redirect('/')
 
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
+    sender = session.get('user')
+
+    if not sender:
+        return redirect('/login')
+
+    conn = mysql.connect()
+    cursor = conn.cursor()
+
+    sql = "SELECT * FROM users WHERE username = %s"
+    cursor.execute(sql, (sender['username'],))
+    sender_data = cursor.fetchone()
+
+    if not sender_data:
+        return redirect('/login')
+
+    sender = {
+        'username': sender_data[4],
+        'email': sender_data[1],
+        'first_name': sender_data[2],
+        'last_name': sender_data[3],
+        'balance': sender_data[6]
+    }
+
     if request.method == 'POST':
 
         monto =  request.form['amount']
@@ -213,20 +236,19 @@ def transfer():
 #INTEGRACION TRANSFERENCIA PROFE
 @app.route('/transfer_api', methods=['GET', 'POST'])
 def transfer_api():
-
     if request.method == 'POST':
         receiver_username = request.form['receiver']
         amount = int(request.form['amount'])
 
         print(request.data)
         response = requests.post("https://musicpro.bemtorres.win/api/v1/tarjeta/transferir",
-            data = {
+            data={
                 'tarjeta_origen': 'ninoska',
                 'tarjeta_destino': receiver_username,
-                'comentario':'PAGO NINOSKA PAY',
+                'comentario': 'PAGO NINOSKA PAY',
                 'monto': amount,
-                'codigo':'DEMOMUSICPRO',
-                'token':'NIN-2707e',
+                'codigo': 'DEMOMUSICPRO',
+                'token': 'NIN-2707e',
             }
         )
         print(response)
@@ -237,31 +259,22 @@ def transfer_api():
 
 @app.route('/reload', methods=['GET', 'POST'])
 def reload_balance():
-    if 'user' in session:
-        user = session['user']
-        return render_template('reload.html', user=user)
+    user = session.get('user')
 
-    username = session.get('username')
-    if not username:
+    if not user:
         return redirect('/login')
 
     conn = mysql.connect()
     cursor = conn.cursor()
 
     sql = "SELECT * FROM users WHERE username = %s"
-    cursor.execute(sql, (username,))
+    cursor.execute(sql, (user['username'],))
     user_data = cursor.fetchone()
 
     if not user_data:
         return redirect('/login')
 
-    user = {
-        'username': user_data[4],
-        'email': user_data[1],
-        'first_name': user_data[2],
-        'last_name': user_data[3],
-        'balance': user_data[6]
-    }
+    user['balance'] = user_data[6]
 
     if request.method == 'POST':
         amount = int(request.form['amount'])
@@ -275,7 +288,7 @@ def reload_balance():
         conn.commit()
 
         return redirect('/dashboard')
-  
+
     return render_template('reload.html', user=user)
 
 #INTEGRACIONES#
