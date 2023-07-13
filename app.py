@@ -9,8 +9,12 @@ import base64
 from flask.views import MethodView
 import requests
 import uuid
+from view_client import client
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-
+import tkinter as tk
 
 app = Flask(__name__)
 
@@ -126,67 +130,85 @@ def logout():
 
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
-    if 'user' in session:
-        sender = session['user']
-        return render_template('transfer.html', user=sender)
-
-    sender_username = session.get('username')
-    if not sender_username:
-        return redirect('/login')
-
-    conn = mysql.connect()
-    cursor = conn.cursor()
-
-    sql = "SELECT * FROM users WHERE username = %s"
-    cursor.execute(sql, (sender_username,))
-    sender_data = cursor.fetchone()
-
-    if not sender_data:
-        return redirect('/login')
-
-    sender = {
-        'username': sender_data[4],
-        'email': sender_data[1],
-        'first_name': sender_data[2],
-        'last_name': sender_data[3],
-        'balance': sender_data[6]
-    }
-
     if request.method == 'POST':
-        receiver_username = request.form['receiver']
-        amount = int(request.form['amount'])
 
-        sql = "SELECT * FROM users WHERE username = %s"
-        cursor.execute(sql, (receiver_username,))
-        receiver_data = cursor.fetchone()
+        monto =  request.form['amount']
 
-        if not receiver_data:
-            error = 'El destinatario no existe.'
-            return render_template('transfer.html', user=sender, error=error)
+        response = requests.post("https://musicpro.bemtorres.win/api/v1/musicpro/send_email",
+                                data={
+                                    'correo':'ni.munozv@duocuc.cl',
+                                    'asunto':'Transferencia exitosa',
+                                    'contenido':'Ha transferido el siguiente monto: $' + monto
+                                }
+                            )
+        print(response)
+        
+        return render_template('transfer.html')
+    else:
+        return render_template('transfer.html')
 
-        receiver = {
-            'username': receiver_data[4],
-            'email': receiver_data[1],
-            'first_name': receiver_data[2],
-            'last_name': receiver_data[3],
-            'balance': receiver_data[6]
-        }
+  # if 'user' in session:
+    #     sender = session['user']
+    #     return render_template('transfer.html', user=sender)
 
-        if amount <= 0 or amount > sender['balance']:
-            error = 'Monto inválido.'
-            return render_template('transfer.html', user=sender, error=error)
+    # sender_username = session.get('username')
+    # if not sender_username:
+    #     return redirect('/login')
+    # sender_username = ('carlos_001') 
 
-        sender['balance'] -= amount
-        receiver['balance'] += amount
+    # conn = mysql.connect()
+    # cursor = conn.cursor()
 
-        sql = "UPDATE users SET balance = %s WHERE username = %s"
-        cursor.execute(sql, (sender['balance'], sender['username']))
-        cursor.execute(sql, (receiver['balance'], receiver['username']))
-        conn.commit()
+    # sql = "SELECT * FROM users WHERE username = %s"
+    # cursor.execute(sql, (sender_username))
+    # sender_data = cursor.fetchone()
 
-        return redirect('/dashboard')
+    # if not sender_data:
+    #     return redirect('/login')
 
-    return render_template('transfer.html', user=sender)
+    # sender = {
+    #     'username': sender_data[4],
+    #     'email': sender_data[1],
+    #     'first_name': sender_data[2],
+    #     'last_name': sender_data[3],
+    #     'balance': sender_data[6]
+    # }
+    # print(sender)
+    # if request.method == 'POST':
+    #     receiver_username =
+    #     amount = int(request.form['balance'])
+
+    #     sql = "SELECT * FROM users WHERE username = %s"
+    #     cursor.execute(sql, (receiver_username,))
+    #     receiver_data = cursor.fetchone()
+
+    #     if not receiver_data:
+    #         error = 'El destinatario no existe.'
+    #         return render_template('transfer.html', user=sender, error=error)
+
+    #     receiver = {
+    #         'username': receiver_data[4],
+    #         'email': receiver_data[1],
+    #         'first_name': receiver_data[2],
+    #         'last_name': receiver_data[3],
+    #         'balance': receiver_data[6]
+    #     }
+
+    #     print(receiver)
+
+    #     if 'amount' <= 0 or amount > sender['balance']:
+    #         error = 'Monto inválido.'
+    #         return render_template('transfer.html', user=sender, error=error)
+
+    #     sender['balance'] -= amount
+    #     receiver['balance'] += amount
+
+    #     sql = "UPDATE users SET balance = %s WHERE username = %s"
+    #     cursor.execute(sql, (sender['balance'], sender['username']))
+    #     cursor.execute(sql, (receiver['balance'], receiver['username']))
+    #     conn.commit()
+
+    #     return redirect('/dashboard')
 
 #INTEGRACION TRANSFERENCIA PROFE
 @app.route('/transfer_api', methods=['GET', 'POST'])
