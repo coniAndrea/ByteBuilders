@@ -113,16 +113,6 @@ def logout():
     session.pop('username', None)
     return redirect('/')
 
-
-# Configura la integración de Webpay con los detalles de tu comercio
-# webpay_plus = WebpayPlus(
-#     commerce_code='tu_codigo_de_comercio',
-#     api_key='tu_api_key',
-#     integration_type='TEST',  # Cambia a 'LIVE' en producción
-#     return_url='https://tu_url_de_retorno.com'
-# )
-
-
 @app.route('/transfer', methods=['GET', 'POST'])
 def transfer():
     if 'user' in session:
@@ -137,7 +127,7 @@ def transfer():
     cursor = conn.cursor()
 
     sql = "SELECT * FROM users WHERE username = %s"
-    cursor.execute(sql, (sender_username,))
+    cursor.execute(sql, (sender_username))
     sender_data = cursor.fetchone()
 
     if not sender_data:
@@ -156,7 +146,7 @@ def transfer():
         amount = int(request.form['amount'])
 
         sql = "SELECT * FROM users WHERE username = %s"
-        cursor.execute(sql, (receiver_username,))
+        cursor.execute(sql, (receiver_username))
         receiver_data = cursor.fetchone()
 
         if not receiver_data:
@@ -174,17 +164,8 @@ def transfer():
         if amount <= 0 or amount > sender['balance']:
             error = 'Monto inválido.'
             return render_template('transfer.html', user=sender, error=error)
-
-        # # Crea la transacción utilizando WebpayPlus
-        # transaction = webpay_plus.TransactionCreate(
-        #     buy_order='orden_de_compra',
-        #     session_id='ID_de_sesion',
-        #     amount=amount,
-        #     return_url=webpay_plus.return_url
-        # )
-
-        # # Redirige al usuario a la URL de Webpay para completar el pago
-        # return redirect(transaction.url)
+        sender['balance'] -= amount
+        receiver['balance'] += amount
 
     return render_template('transfer.html', user=sender)
 
@@ -221,17 +202,8 @@ def reload_balance():
         if amount <= 0:
             error = 'Monto inválido.'
             return render_template('reload.html', user=user, error=error)
-
-        # # Crea la transacción utilizando WebpayPlus
-        # transaction = webpay_plus.TransactionCreate(
-        #     buy_order='orden_de_compra',
-        #     session_id='ID_de_sesion',
-        #     amount=amount,
-        #     return_url=webpay_plus.return_url
-        # )
-
-        # # Redirige al usuario a la URL de Webpay para completar el pago
-        # return redirect(transaction.url)
+        
+        user['balance'] += amount
 
     return render_template('reload.html', user=user)
 
@@ -243,8 +215,7 @@ def retorno():
 
     return redirect('/login')
 
-
-#Mostrar los datos de la BD como api
+#MusicPro
 @app.route('/api/v1/api_saludo', methods=['GET'])
 def api_saludo():
     # response = requests.get("https://musicpro.bemtorres.win/api/v1/test/saludo")
@@ -310,9 +281,7 @@ def registrar_usuario():
         conexion.commit()
         return jsonify({'message':"Usuario Registrado"})
     except Exception as ex:
-        return jsonify({'message':"Error"})
-
-  
+        return jsonify({'message':"Error"})  
 
 @app.route('/usuario/<codigo>', methods=['DELETE'])
 def eliminar_usuario(codigo):
@@ -338,6 +307,7 @@ def actualizar_usuario(codigo):
     except Exception as ex:
         return jsonify({'message':"Error"})
 
+#IMPORTAR BD
 
 @app.cli.command("import_db")
 @click.argument('file_path', default=os.path.join('bd', 'database.sql'))
