@@ -8,6 +8,8 @@ import json
 import base64
 from flask.views import MethodView
 import requests
+import uuid
+
 
 
 app = Flask(__name__)
@@ -186,6 +188,7 @@ def transfer():
 
     return render_template('transfer.html', user=sender)
 
+#INTEGRACION TRANSFERENCIA PROFE
 @app.route('/transfer_api', methods=['GET', 'POST'])
 def transfer_api():
 
@@ -250,6 +253,10 @@ def reload_balance():
         conn.commit()
 
         return redirect('/dashboard')
+  
+    return render_template('reload.html', user=user)
+
+#INTEGRACIONES#
 
 @app.route('/api/v1/api_saldo', methods=['GET'])
 def api_saludo():
@@ -280,7 +287,94 @@ def api_correo():
     resp = response.json()
     return resp
 
-#Mostrar los datos de la BD como api
+#INTEGRACION CON PAYPAL
+#clientID = 'AX-6V1UsW4fjHw6oDjV2GiXVymeIZ5Z33wrBoKwe1SjvklcN-KMwlqRoeFGv5ulDNvdrTKysKF4sg0Oc'
+#clientSecret = 'EHdjszJmfR5xpGWmjaXxtiGa_uZz69ShL3jxNH1n3yzx8bBvBSeT8Boz5IAhxnm0jObcnrAHYHQjJ1Pl'
+@app.route('/efectuado', methods=['GET'])
+def efectuado():
+    return render_template('efectuado.html')
+
+@app.route('/no_efectuado', methods=['GET'])
+def no_efectuado():
+    return render_template('no_efectuado.html')
+
+def PaypalToken(client_id, client_secret):
+    token_url = "https://api.sandbox.paypal.com/v1/oauth2/token"
+    token_data = {
+        "grant_type": "client_credentials"
+    }
+    token_headers = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic {0}".format(base64.b64encode((client_id + ":" + client_secret).encode()).decode())
+    }
+
+    token_response = requests.post(token_url, data=token_data, headers=token_headers)
+    if token_response.status_code == 200:
+        return token_response.json()['access_token']
+    else:
+        return None
+
+@app.route('/paypal/token', methods=['POST'])
+def paypal_token():
+    client_id = request.form.get('client_id')
+    client_secret = request.form.get('client_secret')
+
+    access_token = PaypalToken(client_id, client_secret)
+    return jsonify({'access_token': access_token})
+
+@app.route('/paypal/create/order', methods=['GET'])
+def create_order_view():
+    client_id = 'AX-6V1UsW4fjHw6oDjV2GiXVymeIZ5Z33wrBoKwe1SjvklcN-KMwlqRoeFGv5ulDNvdrTKysKF4sg0Oc'
+    client_secret = 'EHdjszJmfR5xpGWmjaXxtiGa_uZz69ShL3jxNH1n3yzx8bBvBSeT8Boz5IAhxnm0jObcnrAHYHQjJ1Pl'
+
+    token = PaypalToken(client_id, client_secret)
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+    }
+    json_data = {
+        "intent": "CAPTURE",
+        "application_context": {
+           # "notify_url": "https://pesapedia.co.ke",
+            "return_url": "/efectuado",
+            "cancel_url": "/no_efectuado",
+            "brand_name": "ByteBank",
+            #"landing_page": "BILLING",
+            "shipping_preference": "NO_SHIPPING",
+            "user_action": "CONTINUE"
+        },
+        "purchase_units": [
+            {
+                "reference_id": "REF-12345",  # Cambia "REF-12345" por tu propio identificador único
+                "description": "MusicPro",  # Cambia "MusicPro" por tu propia descripción
+                "custom_id": "CUST-" + str(uuid.uuid4()),  # Genera un identificador aleatorio único para custom_id
+                "soft_descriptor": "Venta de instrumentos musicales",  # Cambia por una descripción adecuada
+                "amount": {
+                            "currency_code": "CLP",  # Cambia "USD" por "CLP" para la moneda chilena
+                            "value": "10000"  # Cambia "10000" por el valor que deseas cobrar
+                        },
+            }
+        ]
+    }
+    response = requests.post('https://api-m.sandbox.paypal.com/v2/checkout/orders', headers=headers, json=json_data)
+    order_id = response.json()['id']
+    linkForPayment = response.json()['links'][1]['href']
+    return linkForPayment
+
+@app.route('/paypal/capture/order', methods=['POST'])
+def capture_order_view():
+    token = request.form.get('token')
+    captureurl = request.form.get('url')
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+    }
+    response = requests.post(captureurl, headers=headers)
+    return Response(response.json())
+
+
+#MOSTRAR LOS DATOS DE LA BD COMO API 
 @app.route('/api/v1/usuario', methods=['GET'])
 def listar_usuarios_registrados():
     try:
@@ -291,7 +385,8 @@ def listar_usuarios_registrados():
         datos=cursor.fetchall()#fetchall convierte la respuesta en algo entendible para python
         usuarios=[]
         for fila in datos:
-            usuario={'user_id':fila[0], 'email':fila[1], 'first_name':fila[2], 'last_name':fila[3], 'username':fila[4], 'password':fila[5], 'balance':fila[6]}
+            usuario={'user_id':fila[0], 'email':fila[1], 'first_name':fila[2], 'last_name':fila[3],
+                      'username':fila[4], 'password':fila[5], 'balance':fila[6]}
             usuarios.append(usuario)
         return jsonify({'Usuarios':usuarios, 'message':"Listado de Usuarios Registrados."})
     except Exception as ex:
@@ -306,7 +401,8 @@ def leer_usuario(codigo):
         cursor.execute(sql)
         datos=cursor.fetchone()
         if datos != None:
-            usuario={'user_id':datos[0], 'email':datos[1], 'first_name':datos[2], 'last_name':datos[3], 'username':datos[4], 'password':datos[5], 'balance':datos[6]}
+            usuario={'user_id':datos[0], 'email':datos[1], 'first_name':datos[2], 'last_name':datos[3], 
+                     'username':datos[4], 'password':datos[5], 'balance':datos[6]}
             return jsonify({'usuarios':usuario,'message':"Usuario Encontrado."})
         else:
             return jsonify({'message':"Usuario no encontrado."})
@@ -349,114 +445,6 @@ def actualizar_usuario(codigo):
     except Exception as ex:
         return jsonify({'message':"Error"})
     
-#INTEGRACION CON PAYPAL
-class CreateOrderViewRemote(MethodView):
-    def post(self):
-        # Lógica para crear la orden en PayPal
-        return "Orden creada en PayPal"
-
-class CaptureOrderView(MethodView):
-    def post(self):
-        # Lógica para capturar la orden en PayPal
-        return "Orden capturada en PayPal"
-
-# Rutas de la aplicación
-app.add_url_rule('/paypal/create/order', view_func=CreateOrderViewRemote.as_view('ordercreate'))
-app.add_url_rule('/paypal/capture/order', view_func=CaptureOrderView.as_view('captureorder'))
-
-
-@app.route('/paypal/token', methods=['POST'])
-def paypal_token():
-    client_id = request.form.get('client_id')
-    client_secret = request.form.get('client_secret')
-
-    url = "https://api.sandbox.paypal.com/v1/oauth2/token"
-    data = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "grant_type": "client_credentials"
-    }
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Basic {0}".format(base64.b64encode((client_id + ":" + client_secret).encode()).decode())
-    }
-
-    token = Request.post(url, data=data, headers=headers)
-    return token.json()['access_token']
-
-
-# NO OLVIDE SUSTITUIR "XXX" POR SUS CLAVES
-clientID = 'AX-6V1UsW4fjHw6oDjV2GiXVymeIZ5Z33wrBoKwe1SjvklcN-KMwlqRoeFGv5ulDNvdrTKysKF4sg0Oc'
-clientSecret = 'EHdjszJmfR5xpGWmjaXxtiGa_uZz69ShL3jxNH1n3yzx8bBvBSeT8Boz5IAhxnm0jObcnrAHYHQjJ1Pl'
-
-def PaypalToken(client_id, client_secret):
-    url = "https://api.sandbox.paypal.com/v1/oauth2/token"
-    data = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "grant_type": "client_credentials"
-    }
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Basic {0}".format(base64.b64encode((client_id + ":" + client_secret).encode()).decode())
-    }
-    token = requests.post(url, data=data, headers=headers)
-    return token.json()['access_token']
-
-
-class CreateOrderViewRemote(MethodView):
-
-    def get(self):
-        token = PaypalToken(clientID, clientSecret)
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-        }
-        json_data = {
-            "intent": "CAPTURE",
-            "application_context": {
-                "notify_url": "https://pesapedia.co.ke",
-                "return_url": "https://pesapedia.co.ke",  # change to your domain
-                "cancel_url": "https://pesapedia.co.ke",  # change to your domain
-                "brand_name": "PESAPEDIA SANDBOX",
-                "landing_page": "BILLING",
-                "shipping_preference": "NO_SHIPPING",
-                "user_action": "CONTINUE"
-            },
-            "purchase_units": [
-                {
-                    "reference_id": "294375635",
-                    "description": "African Art and Collectibles",
-                    "custom_id": "CUST-AfricanFashion",
-                    "soft_descriptor": "AfricanFashions",
-                    "amount": {
-                        "currency_code": "USD",
-                        "value": "200"  # amount,
-                    },
-                }
-            ]
-        }
-        response = requests.post('https://api-m.sandbox.paypal.com/v2/checkout/orders', headers=headers, json=json_data)
-        order_id = response.json()['id']
-        linkForPayment = response.json()['links'][1]['href']
-        return linkForPayment
-
-
-class CaptureOrderView(MethodView):
-
-    def get(self):
-        token = request.data.get('token')  # the access token we used above for creating an order, or call the function for generating the token
-        captureurl = request.data.get('url')  # captureurl = 'https://api.sandbox.paypal.com/v2/checkout/orders/6KF61042TG097104C/capture'#see transaction status
-        headers = {"Content-Type": "application/json", "Authorization": "Bearer " + token}
-        response = requests.post(captureurl, headers=headers)
-        return Response(response.json())
-
-
-# Rutas de la aplicación
-app.add_url_rule('/paypal/create/order', view_func=CreateOrderViewRemote.as_view('ordercreate'))
-app.add_url_rule('/paypal/capture/order', view_func=CaptureOrderView.as_view('captureorder'))
-
-
 
 #IMPORTAR BASE DE DATO
 @app.cli.command("import_db")
